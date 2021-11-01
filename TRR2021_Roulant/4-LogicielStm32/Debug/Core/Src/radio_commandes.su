@@ -1,0 +1,7 @@
+radio_commandes.c:33:6:init_radio_commandes	8	static
+radio_commandes.c:73:6:HAL_TIM_IC_CaptureCallback	16	static
+radio_commandes.c:102:5:radio_dir_get	16	static
+radio_commandes.c:119:5:radio_throttle_get	16	static
+radio_commandes.c:135:5:vehicule_speed_get	16	static
+radio_commandes.c:151:5:vehicule_dir_set	16	static
+radio_commandes.c:165:5:vehicule_throttle_set	16	static
