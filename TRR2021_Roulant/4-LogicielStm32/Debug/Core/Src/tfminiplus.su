@@ -1,7 +1,7 @@
-tfminiplus.c:60:6:tfminiplusIrq	56	static
-tfminiplus.c:274:5:tfminiplus_getLastAcquisition	32	static
-tfminiplus.c:326:5:tfminiplus_setOutputFormat	40	static
-tfminiplus.c:399:5:tfminiplus_getFramerate	24	static
-tfminiplus.c:430:5:tfminiplus_getBaudrate	24	static
-tfminiplus.c:461:5:tfminiplus_getVersion	40	static
-tfminiplus.c:510:5:tfminiplus_init	16	static
+tfminiplus.c:64:6:tfminiplusIrq	56	static
+tfminiplus.c:516:5:tfminiplus_getLastAcquisition	32	static
+tfminiplus.c:568:5:tfminiplus_setOutputFormat	40	static
+tfminiplus.c:641:5:tfminiplus_getFramerate	24	static
+tfminiplus.c:672:5:tfminiplus_getBaudrate	24	static
+tfminiplus.c:703:5:tfminiplus_getVersion	40	static
+tfminiplus.c:752:5:tfminiplus_init	16	static

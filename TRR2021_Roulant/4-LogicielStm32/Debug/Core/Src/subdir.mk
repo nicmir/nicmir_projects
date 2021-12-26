@@ -5,6 +5,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../Core/Src/imu.c \
 ../Core/Src/main.c \
 ../Core/Src/pid.c \
 ../Core/Src/radio_commandes.c \
@@ -17,6 +18,7 @@ C_SRCS += \
 ../Core/Src/tfminiplus.c 
 
 OBJS += \
+./Core/Src/imu.o \
 ./Core/Src/main.o \
 ./Core/Src/pid.o \
 ./Core/Src/radio_commandes.o \
@@ -29,6 +31,7 @@ OBJS += \
 ./Core/Src/tfminiplus.o 
 
 C_DEPS += \
+./Core/Src/imu.d \
 ./Core/Src/main.d \
 ./Core/Src/pid.d \
 ./Core/Src/radio_commandes.d \

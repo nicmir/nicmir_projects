@@ -34,9 +34,14 @@ int radio_dir_get(float *a_pDir);
 int radio_throttle_get(float *a_pThrottle);
 // !!!! A travailler !!!!
 int vehicule_speed_get(float *a_pSpeed);
+int vehicule_speed_aimant_get(float *a_pSpeed);
+int vehicule_distance_aimant_get(float *a_pDistance);
+int vehicule_distance_aimant_reset();
 // Par convention, l'angle est négatif quand on tourne à gauche.
 int vehicule_dir_set(float a_dir);
 // Par convention, la vitesse est négative quand on recule.
 int vehicule_throttle_set(float a_throttle);
+// Est ce que le pilote utilise la télécommande ? 0 : non / 1 : oui
+int radio_isThereCommand();
 
 #endif /* INC_RADIO_COMMANDES_H_ */

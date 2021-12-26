@@ -25,11 +25,12 @@
 #include "stdio.h"
 #include "tfminiplus.h"
 #include "radio_commandes.h"
+#include "imu.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef enum { automate_principal_radio, automate_principal_autonome, automate_principal_shell } eEtatsAutomatePrincipal;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -62,9 +63,15 @@ UART_HandleTypeDef huart8;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
+DMA_HandleTypeDef hdma_uart4_rx;
+DMA_HandleTypeDef hdma_uart5_rx;
+DMA_HandleTypeDef hdma_uart7_rx;
+DMA_HandleTypeDef hdma_uart7_tx;
+DMA_HandleTypeDef hdma_uart8_rx;
 
 /* USER CODE BEGIN PV */
-
+extern int gUpdateGyro;
+eEtatsAutomatePrincipal etat_automate_principal;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -86,6 +93,7 @@ static void MX_USART3_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_ADC3_Init(void);
 static void MX_ADC2_Init(void);
+static void MX_DMA_Init(void);
 static void MX_TIM12_Init(void);
 /* USER CODE BEGIN PFP */
 extern void shell();
@@ -135,7 +143,11 @@ return ch8;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	uint32_t current_time;
+	uint32_t last_time_gyro;
+	uint16_t temps_appui_boutonext1;
+	uint16_t temps_appui_boutonext2;
+	float direction, throttle, distance, vitesse;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -156,6 +168,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_I2C1_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
@@ -175,18 +188,36 @@ int main(void)
   MX_TIM12_Init();
   /* USER CODE BEGIN 2 */
 
-  printf("+++++++ Buggy TRR 2022 Roulant +++++++");
+  printf("+++++++ Buggy TRR 2022 Roulant +++++++\r\n");
 
   // Initialisation des Lidars
-  //tfminiplus_init();
+  tfminiplus_init();
 
   // Initialisation de la gestion radio et commande vehicule
   init_radio_commandes();
 
   // Récupération des parametres de conf
 
-  // Lancement du shell
-  shell();
+  // Gyro
+  if(gyro_init() == GYRO_OK)
+  {
+	  last_time_gyro = HAL_GetTick();
+	  while(gyro_is_calibrated())
+	  {
+		  HAL_Delay(1);
+		  current_time = HAL_GetTick();
+		  gyro_auto_calibrate(current_time - last_time_gyro);
+		  last_time_gyro = current_time;
+	  }
+	  printf("Gyro calibrated\r\n");
+	  gUpdateGyro = 1;
+	  gyro_reset_heading();
+  }
+  else
+	  printf("Erreur d'initialisation du Gyro\r\n");
+
+  temps_appui_boutonext1 = 0;
+  temps_appui_boutonext2 = 0;
 
   /* USER CODE END 2 */
 
@@ -197,6 +228,75 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  if(HAL_GPIO_ReadPin(boutonExt1_GPIO_Port, boutonExt1_Pin)==GPIO_PIN_RESET)
+		  temps_appui_boutonext1 += 10; // La durée d'appui du bouton est allongée de 10 ms
+	  else
+		  temps_appui_boutonext1 = 0;
+	  if(HAL_GPIO_ReadPin(boutonExt2_GPIO_Port, boutonExt2_Pin)==GPIO_PIN_RESET)
+		  temps_appui_boutonext2 += 10; // La durée d'appui du bouton est allongée de 10 ms
+	  else
+		  temps_appui_boutonext2 = 0;
+
+	  switch(etat_automate_principal)
+	  {
+	  case automate_principal_radio :
+		  // Bandeau de lumière couleur xxx
+		  // Par défaut aujourd'hui allume led verte
+		  HAL_GPIO_WritePin(led1_GPIO_Port, led1_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(led2_GPIO_Port, led2_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(led3_GPIO_Port, led3_Pin, GPIO_PIN_SET);
+
+		  if(temps_appui_boutonext1 > 1000)
+			  etat_automate_principal = automate_principal_autonome;
+		  else if(temps_appui_boutonext2 > 1000)
+			  etat_automate_principal = automate_principal_shell;
+		  else
+		  {
+			  // On reste dans l'état actuel.
+			  // On recopie les commandes de la radio vers le véhicule
+				radio_dir_get(&direction);
+				radio_throttle_get(&throttle);
+				vehicule_dir_set(direction);
+				vehicule_throttle_set(throttle);
+				vehicule_distance_aimant_get(&distance);
+				vehicule_speed_aimant_get(&vitesse);
+				printf("%f; %f; %f; %f\r\n", throttle, direction, distance, vitesse);
+		  }
+		  break;
+	  case automate_principal_autonome :
+		  // Bandeau de lumière couleur xxx
+		  // Par défaut aujourd'hui allume led rouge
+		  HAL_GPIO_WritePin(led1_GPIO_Port, led1_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(led2_GPIO_Port, led2_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(led3_GPIO_Port, led3_Pin, GPIO_PIN_SET);
+
+		  if(radio_isThereCommand() != 0)
+			  etat_automate_principal = automate_principal_radio;
+//		  else
+//		  {
+//			  // Appel de l'automate automatique
+//		  }
+		  break;
+	  case automate_principal_shell :
+		  // Bandeau de lumière couleur xxx
+		  // Par défaut aujourd'hui allume led bleue
+		  HAL_GPIO_WritePin(led1_GPIO_Port, led1_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(led2_GPIO_Port, led2_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(led3_GPIO_Port, led3_Pin, GPIO_PIN_RESET);
+
+		  // Lancement du shell
+		  shell();
+
+		  etat_automate_principal = automate_principal_radio;
+		  break;
+	  default :
+		  etat_automate_principal = automate_principal_radio;
+		  break;
+
+	  }
+
+	  // Iteration de l'automate principale toutes les 10 ms.
+	  HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -723,9 +823,9 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 0;
+  htim4.Init.Prescaler = 108;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 108;
+  htim4.Init.Period = 65535;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
@@ -843,9 +943,9 @@ static void MX_TIM12_Init(void)
 
   /* USER CODE END TIM12_Init 1 */
   htim12.Instance = TIM12;
-  htim12.Init.Prescaler = 0;
+  htim12.Init.Prescaler = 108;
   htim12.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim12.Init.Period = 108;
+  htim12.Init.Period = 65535;
   htim12.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim12.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim12) != HAL_OK)
@@ -949,7 +1049,8 @@ static void MX_UART5_Init(void)
   huart5.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart5.Init.OverSampling = UART_OVERSAMPLING_16;
   huart5.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart5.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  huart5.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_RXOVERRUNDISABLE_INIT;
+  huart5.AdvancedInit.OverrunDisable = UART_ADVFEATURE_OVERRUN_DISABLE;
   if (HAL_UART_Init(&huart5) != HAL_OK)
   {
     Error_Handler();
@@ -1132,6 +1233,34 @@ static void MX_USART3_UART_Init(void)
   /* USER CODE BEGIN USART3_Init 2 */
 
   /* USER CODE END USART3_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+  /* DMA1_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
+  /* DMA1_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);
+  /* DMA1_Stream3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
+  /* DMA1_Stream6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
 
 }
 

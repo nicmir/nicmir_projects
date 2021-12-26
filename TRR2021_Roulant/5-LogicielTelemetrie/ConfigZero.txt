@@ -1,0 +1,6 @@
+Adresse IP : 10.3.141.1/24  et  169.254.218.244/16
+Nom d’utilisateur gestion : admin
+Mot de passe gestion : sectionrobotique
+Plage DHCP : 10.3.141.50 à 10.3.141.255
+SSID : Trr2022_Carre92_tt01
+Mot de passe du SSID : ChangeMe

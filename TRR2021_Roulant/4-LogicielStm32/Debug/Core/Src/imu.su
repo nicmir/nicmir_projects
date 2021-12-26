@@ -1,0 +1,9 @@
+imu.c:87:9:gyro_read_8bit_register	32	static
+imu.c:118:6:gyro_write_8bit_register	32	static
+imu.c:132:10:gyro_init	16	static
+imu.c:180:6:gyro_update	24	static
+imu.c:191:7:gyro_get_dps	4	static
+imu.c:196:6:gyro_reset_heading	4	static
+imu.c:201:7:gyro_get_heading	4	static
+imu.c:206:6:gyro_is_calibrated	4	static
+imu.c:217:6:gyro_auto_calibrate	32	static

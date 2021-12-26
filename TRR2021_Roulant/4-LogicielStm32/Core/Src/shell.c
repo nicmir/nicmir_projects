@@ -4,6 +4,8 @@
 #include "stdlib.h"
 #include "math.h"
 #include "radio_commandes.h"
+#include "tfminiplus.h"
+#include "imu.h"
 
 #define PROMPT "TRR2021Roulant> "
 
@@ -231,6 +233,8 @@ char *saisie_commande()
 	                pCommandeCourante[i+1] = pCommandeCourante[i];
 
 	            pCommandeCourante[position++] = caractere;
+	            if(caractere==32)
+	            	printf("x");
 	            nb_car_valide++;
 	        }
 		}
@@ -272,12 +276,17 @@ void shell()
     char *tab_args[50];
     int num_args, i;
     float radio_throttle, radio_dir;
+    float distance, speed, speed_aimant;
+    int32_t lidar_distance_gauche, lidar_distance_droite, lidar_distance_avant, lidar_distance_haut, lidar_rssi, lidar_temperature;
+    int quitter;
+	int nb_lectures;
 
     sh_historique.commande_courante = 0;
     for(i=0; i<SHELL_MAX_HISTORIQUE; i++)
         sh_historique.commandes[i][0] = '\0';
 
     printf("\r\n");
+    quitter = 0;
 
     do {
         printf("%s", PROMPT);
@@ -429,11 +438,68 @@ void shell()
 				float valeur = atof(tab_args[1]);
 				printf("%f\r\n", valeur);
 
-				if((valeur >= -45.0) && (valeur <= 45.0))
+				if((valeur >= -26.0) && (valeur <= 26.0))
 					vehicule_dir_set(valeur);
 			}
 			else
-				printf("Parametres incorrects. \r\nSyntaxe : vehicule_dir_set <-45.0 ... 45.0>\r\n");
+				printf("Parametres incorrects. \r\nSyntaxe : vehicule_dir_set <-26.0 ... 26.0>\r\n");
+		} else
+		if(strcmp(tab_args[0], "vehicule_speed_get") == 0)
+		{
+			if(num_args==1)
+			{
+
+				printf("Iteration; vitesse_cmd; distance; speed; speed_aimant\r\n");
+				nb_lectures = 0;
+				vehicule_distance_aimant_reset();
+				do {
+					nb_lectures++;
+
+					vehicule_distance_aimant_get(&distance);
+					vehicule_speed_get(&speed);
+					vehicule_speed_aimant_get(&speed_aimant);
+
+					// Pilotage par la télécommande
+					radio_dir_get(&radio_dir);
+					radio_throttle_get(&radio_throttle);
+					vehicule_dir_set(radio_dir);
+					vehicule_throttle_set(radio_throttle);
+
+					printf("%d; %f; %f; %f; %f\r\n", nb_lectures, radio_throttle, distance, speed, speed_aimant);
+
+					HAL_Delay(10);
+					// Acquisition sur 10 s
+				} while(nb_lectures<1000);
+
+				// Remise à 0 de la vitesse
+				vehicule_throttle_set(0.0);
+
+			}
+			else
+				printf("Parametres incorrects. \r\nSyntaxe : vehicule_speed_get \r\n");
+		} else
+		if(strcmp(tab_args[0], "lidar_get") == 0)
+		{
+			if(num_args==1)
+			{
+				nb_lectures = 0;
+
+				do {
+					tfminiplus_getLastAcquisition(MINILIDAR_GAUCHE, &lidar_distance_gauche, &lidar_rssi, &lidar_temperature);
+					tfminiplus_getLastAcquisition(MINILIDAR_DROIT, &lidar_distance_droite, &lidar_rssi, &lidar_temperature);
+					tfminiplus_getLastAcquisition(MINILIDAR_AVANT, &lidar_distance_avant, &lidar_rssi, &lidar_temperature);
+					tfminiplus_getLastAcquisition(MINILIDAR_HAUT, &lidar_distance_haut, &lidar_rssi, &lidar_temperature);
+
+					printf("Gauche : %ld cm, Avant : %ld cm, Haut : %ld cm, Droit : %ld cm\r\n",
+							lidar_distance_gauche, lidar_distance_avant, lidar_distance_haut, lidar_distance_droite);
+
+					HAL_Delay(1000);
+					nb_lectures++;
+				}while(nb_lectures<120);
+
+			}
+			else
+				printf("Parametres incorrects. \r\nSyntaxe : lidar_get \r\n");
 		} else
 //		if(strcmp(tab_args[0], "gyro_registers_get") == 0)
 //		{
@@ -459,11 +525,35 @@ void shell()
 //			else
 //				printf("Parametres incorrects. \r\nSyntaxe : gyro_variance\r\n");
 //		} else
+		if(strcmp(tab_args[0], "gyro_heading_get") == 0)
+		{
+			if(num_args==1)
+			{
+				int nb_lectures;
+				printf("Iteration; heading; dps\r\n");
+				nb_lectures = 0;
+				do {
+					nb_lectures++;
+
+					printf("%d; %f; %f\r\n", nb_lectures, gyro_get_heading(), gyro_get_dps());
+
+					HAL_Delay(10);
+					// Acquisition sur 10 s
+				} while(nb_lectures<1000);
+			}
+			else
+				printf("Parametres incorrects. \r\nSyntaxe : gyro_heading_get \r\n");
+		} else
         if(strcmp(tab_args[0], "reset") == 0)
         {
             // Reset
             NVIC_SystemReset();
         } else
+		if(strcmp(tab_args[0], "quit") == 0)
+		{
+			// Quitter le shell
+			quitter = 1;
+		} else
         if(strcmp(tab_args[0], "help") == 0)
         {
             // Help
@@ -472,14 +562,26 @@ void shell()
             printf("         permet d'allumer ou d'eteindre l'une des 4 leds.\r\n");
             printf("- hw_buttons\r\n");
             printf("         permet d'afficher l'etat des boutons.\r\n");
-			printf("- params_restore\r\n");
-            printf("         permet de charger les parametres depuis la Flash Interne.\r\n");
-            printf("- params_show\r\n");
-            printf("         permet d'afficher les parametres courants\r\n");
-            printf("- params_modify\r\n");
-            printf("         permet de modifier les parametres courants\r\n");
+//			  printf("- params_restore\r\n");
+//            printf("         permet de charger les parametres depuis la Flash Interne.\r\n");
+//            printf("- params_show\r\n");
+//            printf("         permet d'afficher les parametres courants\r\n");
+//            printf("- params_modify\r\n");
+//            printf("         permet de modifier les parametres courants\r\n");
+            printf("- radio_get <nb_lectures=1>\r\n");
+            printf("         permet de lire les commandes provenant de la radio.\r\n");
+            printf("- vehicule_throttle_set <-10.0 ... 10.0>\r\n");
+            printf("         permet de commander la vitesse du vehicule.\r\n");
+            printf("- vehicule_dir_set <-26.0 ... 26.0>\r\n");
+            printf("         permet de commander la direction du vehicule.\r\n");
+            printf("- vehicule_speed_get\r\n");
+            printf("         permet de lire les capteurs de vitesses pour la calibration du capteur BEAST.\r\n");
+            printf("- gyro_heading\r\n");
+            printf("         permet de lire le cap en boucle.\r\n");
             printf("- reset\r\n");
             printf("         permet de reseter le robot.\r\n");
+            printf("- quit\r\n");
+            printf("         permet de sortir du shell.\r\n");
             printf("- version\r\n");
             printf("         permet d'obtenir la version logicielle.\r\n");
         } else
@@ -487,5 +589,5 @@ void shell()
             printf("Commande inconnue !\r\n");
         }
 
-    } while(1);
+    } while(quitter == 0);
 }
