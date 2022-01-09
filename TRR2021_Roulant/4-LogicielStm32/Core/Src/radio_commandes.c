@@ -6,7 +6,7 @@
  */
 
 #include "main.h"
-#include <math.h>
+#include <stdlib.h>
 
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim2;
@@ -39,7 +39,6 @@ static float magnet_count = 4.0;
 static float gear_ratio = 2.64;
 static float wheel_perimeter = 0.204;
 // Speed
-static float actual_speed_ms;
 static int32_t vitesse_mesuree = -1;
 
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) // Callback for PWM input catpure
@@ -95,7 +94,10 @@ int radio_dir_get(float *a_pDir)
 {
 	// Si la commande radio n'a pas été rafraichie depuis plus d'une seconde, on remonte une panne
 	if( (HAL_GetTick() - radio_dir.last_time) > 1000)
+	{
+		*a_pDir = 0.0;
 		return -1;
+	}
 	else
 	{
 		// A terme, vérifier que le duty_cycle est bien limité à 1000 - 2000 us.
@@ -112,7 +114,10 @@ int radio_throttle_get(float *a_pThrottle)
 {
 	// Si la commande radio n'a pas été rafraichie depuis plus d'une seconde, on remonte une panne
 	if((HAL_GetTick() - radio_throttle.last_time) > 1000)
+	{
+		*a_pThrottle = 0.0;
 		return -1;
+	}
 	else
 	{
 		if(radio_throttle.duty_cycle<1000) radio_throttle.duty_cycle = 1000;

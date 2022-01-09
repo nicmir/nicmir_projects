@@ -32,7 +32,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h \
  ../Core/Inc/tfminiplus.h ../Core/Inc/radio_commandes.h ../Core/Inc/imu.h \
- ../Core/Inc/main.h
+ ../Core/Inc/main.h ../Core/Inc/pid.h ../Core/Inc/algo_suivi_bords.h \
+ ../Core/Inc/telemetrie.h
 
 ../Core/Inc/main.h:
 
@@ -107,3 +108,9 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/imu.h:
 
 ../Core/Inc/main.h:
+
+../Core/Inc/pid.h:
+
+../Core/Inc/algo_suivi_bords.h:
+
+../Core/Inc/telemetrie.h:

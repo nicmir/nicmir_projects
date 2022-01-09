@@ -1,4 +1,5 @@
-Core/Src/shell.o: ../Core/Src/shell.c ../Core/Inc/main.h \
+Core/Src/algo_suivi_bords.o: ../Core/Src/algo_suivi_bords.c \
+ ../Core/Inc/pid.h ../Core/Inc/main.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal.h \
  ../Core/Inc/stm32f7xx_hal_conf.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rcc.h \
@@ -31,9 +32,11 @@ Core/Src/shell.o: ../Core/Src/shell.c ../Core/Inc/main.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_tim_ex.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h \
- ../Core/Inc/radio_commandes.h ../Core/Inc/tfminiplus.h ../Core/Inc/imu.h \
- ../Core/Inc/main.h ../Core/Inc/parametres_configuration.h \
- ../Core/Inc/telemetrie.h
+ ../Core/Inc/parametres_configuration.h ../Core/Inc/tfminiplus.h \
+ ../Core/Inc/telemetrie.h ../Core/Inc/radio_commandes.h ../Core/Inc/imu.h \
+ ../Core/Inc/algo_suivi_bords.h
+
+../Core/Inc/pid.h:
 
 ../Core/Inc/main.h:
 
@@ -101,14 +104,14 @@ Core/Src/shell.o: ../Core/Src/shell.c ../Core/Inc/main.h \
 
 ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h:
 
-../Core/Inc/radio_commandes.h:
+../Core/Inc/parametres_configuration.h:
 
 ../Core/Inc/tfminiplus.h:
 
+../Core/Inc/telemetrie.h:
+
+../Core/Inc/radio_commandes.h:
+
 ../Core/Inc/imu.h:
 
-../Core/Inc/main.h:
-
-../Core/Inc/parametres_configuration.h:
-
-../Core/Inc/telemetrie.h:
+../Core/Inc/algo_suivi_bords.h:

@@ -1,0 +1,4 @@
+parametres_configuration.c:12:6:paramConf_restaure	4	static
+parametres_configuration.c:18:6:paramConf_sauvegarde	4	static
+parametres_configuration.c:23:6:paramConf_lecture	168	static
+parametres_configuration.c:40:6:paramConf_modification	56	static

@@ -26,6 +26,9 @@
 #include "tfminiplus.h"
 #include "radio_commandes.h"
 #include "imu.h"
+#include "pid.h"
+#include "algo_suivi_bords.h"
+#include "telemetrie.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -71,6 +74,9 @@ DMA_HandleTypeDef hdma_uart8_rx;
 
 /* USER CODE BEGIN PV */
 extern int gUpdateGyro;
+extern eEtatsAutomateAutomatique etat_automate_automatique;
+//extern st_telemetrie gTelemetrie;
+
 eEtatsAutomatePrincipal etat_automate_principal;
 /* USER CODE END PV */
 
@@ -144,10 +150,14 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	uint32_t current_time;
+	uint8_t filtre_declenchement_auto;
 	uint32_t last_time_gyro;
-	uint16_t temps_appui_boutonext1;
+	uint16_t temps_appui_boutonext1, temps_relachement_boutonext1;
 	uint16_t temps_appui_boutonext2;
 	float direction, throttle, distance, vitesse;
+	st_tele_element *pTeleElement;
+	st_context_robot robot_contexte;
+	int erreur;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -216,7 +226,14 @@ int main(void)
   else
 	  printf("Erreur d'initialisation du Gyro\r\n");
 
+  // Télémetrie
+  telemetrie_init();
+  pTeleElement = telemetrie_pt_enreg_en_cours();
+  erreur = 0;
+
+  // Initialisation des variables
   temps_appui_boutonext1 = 0;
+  temps_relachement_boutonext1 = 0;
   temps_appui_boutonext2 = 0;
 
   /* USER CODE END 2 */
@@ -229,13 +246,22 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  if(HAL_GPIO_ReadPin(boutonExt1_GPIO_Port, boutonExt1_Pin)==GPIO_PIN_RESET)
+	  {
 		  temps_appui_boutonext1 += 10; // La durée d'appui du bouton est allongée de 10 ms
+		  temps_relachement_boutonext1 = 0;
+	  }
 	  else
+	  {
 		  temps_appui_boutonext1 = 0;
+		  if(temps_relachement_boutonext1 < 60000) // on limite sinon le compteur partirait en dépassement
+			  temps_relachement_boutonext1 += 10;
+	  }
 	  if(HAL_GPIO_ReadPin(boutonExt2_GPIO_Port, boutonExt2_Pin)==GPIO_PIN_RESET)
 		  temps_appui_boutonext2 += 10; // La durée d'appui du bouton est allongée de 10 ms
 	  else
 		  temps_appui_boutonext2 = 0;
+
+	  gyro_update(0.01);
 
 	  switch(etat_automate_principal)
 	  {
@@ -247,7 +273,11 @@ int main(void)
 		  HAL_GPIO_WritePin(led3_GPIO_Port, led3_Pin, GPIO_PIN_SET);
 
 		  if(temps_appui_boutonext1 > 1000)
+		  {
+			  algo_init(&robot_contexte);
+			  filtre_declenchement_auto = 0;
 			  etat_automate_principal = automate_principal_autonome;
+		  }
 		  else if(temps_appui_boutonext2 > 1000)
 			  etat_automate_principal = automate_principal_shell;
 		  else
@@ -260,7 +290,18 @@ int main(void)
 				vehicule_throttle_set(throttle);
 				vehicule_distance_aimant_get(&distance);
 				vehicule_speed_aimant_get(&vitesse);
-				printf("%f; %f; %f; %f\r\n", throttle, direction, distance, vitesse);
+				if(erreur == 0)
+				{
+					pTeleElement->consigne_direction = direction;
+					pTeleElement->consigne_vitesse = throttle;
+					pTeleElement->mesure_vitesse = vitesse;
+					pTeleElement->mesure_distance = distance;
+					pTeleElement->heading = gyro_get_heading();
+					pTeleElement->gyro_dps = gyro_get_dps();
+					pTeleElement->etat_automate_principal = automate_principal_radio;
+
+					pTeleElement = telemetrie_pt_enreg_suivant(&erreur);
+				}
 		  }
 		  break;
 	  case automate_principal_autonome :
@@ -270,7 +311,18 @@ int main(void)
 		  HAL_GPIO_WritePin(led2_GPIO_Port, led2_Pin, GPIO_PIN_SET);
 		  HAL_GPIO_WritePin(led3_GPIO_Port, led3_Pin, GPIO_PIN_SET);
 
-		  if(radio_isThereCommand() != 0)
+		  // On attend le relachement du bouton puis 2 secondes,
+		  // le temps que la personne retire complètement son doigt de l'environnement du robot
+		  if((temps_relachement_boutonext1>2000) && (filtre_declenchement_auto == 0))
+			  filtre_declenchement_auto = 1;
+
+		  if(filtre_declenchement_auto == 1)
+			  // Appel automate
+			  algo_decouverte(&robot_contexte, 0.01);
+
+		  // Si le pilote tente de reprendre le controle passage immédiat des commandes
+		  // Si le tour de piste en automatique est fini alors passage des commandes à la radio
+		  if((radio_isThereCommand() != 0) || (etat_automate_automatique == automate_auto_fini))
 			  etat_automate_principal = automate_principal_radio;
 //		  else
 //		  {
@@ -286,6 +338,10 @@ int main(void)
 
 		  // Lancement du shell
 		  shell();
+
+		  telemetrie_init();
+		  pTeleElement = telemetrie_pt_enreg_en_cours();
+		  erreur = 0;
 
 		  etat_automate_principal = automate_principal_radio;
 		  break;

@@ -37,7 +37,7 @@
 ENTRY(Reset_Handler)
 
 /* Highest address of the user mode stack */
-_estack = ORIGIN(RAM) + LENGTH(RAM); /* end of "RAM" Ram type memory */
+_estack = ORIGIN(RAM_DTCM) + LENGTH(RAM_DTCM); /* end of "RAM" Ram type memory */
 
 _Min_Heap_Size = 0x200 ; /* required amount of heap */
 _Min_Stack_Size = 0x400 ; /* required amount of stack */
@@ -45,8 +45,10 @@ _Min_Stack_Size = 0x400 ; /* required amount of stack */
 /* Memories definition */
 MEMORY
 {
-  RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 320K
-  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 1024K
+  RAM_DTCM (xrw)    : ORIGIN = 0x20000000,   LENGTH = 64K
+  RAM_D1   (xrw)    : ORIGIN = 0x20010000,   LENGTH = 240K
+  RAM_D2   (xrw)    : ORIGIN = 0x2004C000,   LENGTH = 16K
+  FLASH    (rx)     : ORIGIN = 0x08000000,   LENGTH = 1024K
 }
 
 /* Sections */
@@ -145,7 +147,7 @@ SECTIONS
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
 
-  } >RAM AT> FLASH
+  } >RAM_DTCM AT> FLASH
 
   /* Uninitialized data section into "RAM" Ram type memory */
   . = ALIGN(4);
@@ -161,7 +163,7 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
-  } >RAM
+  } >RAM_DTCM
 
   /* User_heap_stack section, used to check that there is enough "RAM" Ram  type memory left */
   ._user_heap_stack :
@@ -172,7 +174,13 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >RAM
+  } >RAM_DTCM 
+
+  /* Pour le BDMA */
+  .mem_telemetrie :
+  {
+    KEEP(*(.mem_telemetrie))
+  } >RAM_D1 AT> FLASH
 
   /* Remove information from the compiler libraries */
   /DISCARD/ :

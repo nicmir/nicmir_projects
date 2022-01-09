@@ -1,0 +1,5 @@
+telemetrie.c:15:18:telemetrie_pt_enreg_en_cours	4	static
+telemetrie.c:23:18:telemetrie_pt_enreg_suivant	24	static
+telemetrie.c:60:18:telemetrie_pt_lecture_en_cours	4	static
+telemetrie.c:67:18:telemetrie_pt_lecture_suivant	24	static
+telemetrie.c:92:6:telemetrie_init	4	static

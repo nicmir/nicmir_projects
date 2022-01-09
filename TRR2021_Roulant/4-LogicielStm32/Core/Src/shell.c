@@ -6,8 +6,10 @@
 #include "radio_commandes.h"
 #include "tfminiplus.h"
 #include "imu.h"
+#include "parametres_configuration.h"
+#include "telemetrie.h"
 
-#define PROMPT "TRR2021Roulant> "
+#define PROMPT "TRR2022Roulant> "
 
 #define SHELL_MAX_HISTORIQUE 5
 typedef struct {
@@ -280,6 +282,8 @@ void shell()
     int32_t lidar_distance_gauche, lidar_distance_droite, lidar_distance_avant, lidar_distance_haut, lidar_rssi, lidar_temperature;
     int quitter;
 	int nb_lectures;
+	st_tele_element *pTeleElement;
+	int erreur;
 
     sh_historique.commande_courante = 0;
     for(i=0; i<SHELL_MAX_HISTORIQUE; i++)
@@ -525,6 +529,61 @@ void shell()
 //			else
 //				printf("Parametres incorrects. \r\nSyntaxe : gyro_variance\r\n");
 //		} else
+		if(strcmp(tab_args[0], "paramconf_restaure") == 0)
+		{
+			if(num_args==1)
+			{
+				paramConf_restaure();
+			} else
+				printf("Parametres incorrects. \r\nSyntaxe : paramconf_restaure\r\n");
+		} else
+		if(strcmp(tab_args[0], "paramconf_sauvegarde") == 0)
+		{
+			if(num_args==1)
+			{
+				paramConf_sauvegarde();
+			} else
+				printf("Parametres incorrects. \r\nSyntaxe : paramconf_sauvegarde\r\n");
+		} else
+		if(strcmp(tab_args[0], "paramconf_lecture") == 0)
+		{
+			if(num_args==1)
+			{
+				paramConf_lecture();
+			} else
+				printf("Parametres incorrects. \r\nSyntaxe : paramconf_lecture\r\n");
+		} else
+		if(strcmp(tab_args[0], "paramconf_modification") == 0)
+		{
+			if(num_args==12)
+			{
+				paramConf_modification(
+						atof(tab_args[1]), atof(tab_args[2]), atof(tab_args[3]),
+						atof(tab_args[4]), atof(tab_args[5]), atof(tab_args[6]),
+						atof(tab_args[7]), atof(tab_args[8]), atof(tab_args[9]),
+						atof(tab_args[10]), atof(tab_args[11]));
+			} else
+				printf("Parametres incorrects. \r\nSyntaxe : paramconf_modification <N parametres>\r\n");
+		} else
+		if(strcmp(tab_args[0], "telemetrie") == 0)
+		{
+			if(num_args==1)
+			{
+				pTeleElement = telemetrie_pt_lecture_en_cours();
+				do {
+					printf("T;%f;%f;%f;%f;%f;%f;%d;%d;%d;%d;%d;%d\r\n",
+							pTeleElement->consigne_vitesse, pTeleElement->consigne_direction,
+							pTeleElement->mesure_vitesse, pTeleElement->heading,
+							pTeleElement->gyro_dps, pTeleElement->mesure_distance,
+							(int)pTeleElement->lidar_droit, (int)pTeleElement->lidar_gauche,
+							(int)pTeleElement->lidar_avant, (int)pTeleElement->lidar_haut,
+							pTeleElement->etat_automate_principal, pTeleElement->etat_automate_auto);
+
+					pTeleElement = telemetrie_pt_lecture_suivant(&erreur);
+				} while(erreur == 0);
+			} else
+				printf("Parametres incorrects. \r\nSyntaxe : telemetrie\r\n");
+		} else
 		if(strcmp(tab_args[0], "gyro_heading_get") == 0)
 		{
 			if(num_args==1)
