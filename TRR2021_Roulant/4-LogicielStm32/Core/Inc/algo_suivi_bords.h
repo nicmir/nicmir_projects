@@ -14,7 +14,7 @@ typedef struct {
 	pid_context_t pidVitesse;
 	pid_context_t pidDirection;
 
-	int32_t travelledDistance;  // en cm
+	float travelledDistance;    // en m
 	uint32_t elapsedTime;       // en ms
 
 	float vitesse_cible;        // en m/s

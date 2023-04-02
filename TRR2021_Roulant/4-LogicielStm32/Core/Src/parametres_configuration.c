@@ -12,6 +12,17 @@ st_param_conf gParametresConfiguration;
 void paramConf_restaure()
 {
 	// Relecture dans la flash
+	gParametresConfiguration.acceleration_max = 12.0; // mesuré le 24 Jan 2022 : 24.34 m/s²
+	gParametresConfiguration.deceleration_max = 12.0;
+	gParametresConfiguration.vitesse_max_ligne_droite = 5.0;
+	gParametresConfiguration.vitesse_max_virage = 3.0;
+	gParametresConfiguration.vitesse_max_decouverte = 5.0;
+	gParametresConfiguration.pid_vitesse_kp = 1.0;
+	gParametresConfiguration.pid_vitesse_ki = 0.0;
+	gParametresConfiguration.pid_vitesse_kd = 5.0;
+	gParametresConfiguration.pid_direction_kp = 0.5;
+	gParametresConfiguration.pid_direction_ki = 0.0;
+	gParametresConfiguration.pid_direction_kd = 10.0;
 
 }
 
@@ -23,7 +34,7 @@ void paramConf_sauvegarde()
 void paramConf_lecture()
 {
 	// Affichage des parametres courants
-	printf("%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\r\n",
+	printf("%f %f %f %f %f %f %f %f %f %f %f\r\n",
 			gParametresConfiguration.acceleration_max,
 			gParametresConfiguration.deceleration_max,
 			gParametresConfiguration.vitesse_max_ligne_droite,

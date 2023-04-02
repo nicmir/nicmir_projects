@@ -26,6 +26,10 @@ typedef struct {
 
 } st_param_conf;
 
+#define VEHICULE_DIR_MAX   26.0 // ° - Mesuré sur la TT01
+#define VEHICULE_SPEED_MAX 17.0 // m/s
+
+
 void paramConf_restaure();
 void paramConf_sauvegarde();
 void paramConf_lecture();

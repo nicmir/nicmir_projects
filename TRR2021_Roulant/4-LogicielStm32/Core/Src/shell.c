@@ -9,7 +9,9 @@
 #include "parametres_configuration.h"
 #include "telemetrie.h"
 
-#define PROMPT "TRR2022Roulant> "
+#define PROMPT "RoulantTRR2022> "
+
+extern uint32_t buffer_uart5[10];
 
 #define SHELL_MAX_HISTORIQUE 5
 typedef struct {
@@ -235,8 +237,6 @@ char *saisie_commande()
 	                pCommandeCourante[i+1] = pCommandeCourante[i];
 
 	            pCommandeCourante[position++] = caractere;
-	            if(caractere==32)
-	            	printf("x");
 	            nb_car_valide++;
 	        }
 		}
@@ -487,6 +487,11 @@ void shell()
 			if(num_args==1)
 			{
 				nb_lectures = 0;
+
+				printf("buffer_uart = %x, %x, %x, %x, %x, %x, %x, %x, %x, %x\r\n",
+						buffer_uart5[0], buffer_uart5[1], buffer_uart5[2], buffer_uart5[3], buffer_uart5[4], buffer_uart5[5],
+						buffer_uart5[6], buffer_uart5[7], buffer_uart5[8], buffer_uart5[9]
+						);
 
 				do {
 					tfminiplus_getLastAcquisition(MINILIDAR_GAUCHE, &lidar_distance_gauche, &lidar_rssi, &lidar_temperature);

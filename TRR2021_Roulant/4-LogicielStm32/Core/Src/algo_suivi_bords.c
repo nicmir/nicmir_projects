@@ -5,7 +5,9 @@
  *      Author: nmira
  */
 
+#include "main.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include "pid.h"
 #include "parametres_configuration.h"
 #include "tfminiplus.h"
@@ -39,16 +41,16 @@ void calculConsigneTrapezoidaleVitesse(st_context_robot *a_pRobot, float deltaT)
 
     difference = a_pRobot->vitesse_cible - a_pRobot->vitesse_cmd_courante;
 
-    if(difference > 0)
+    if(difference > 0.0)
     {
     	if(difference > gParametresConfiguration.acceleration_max/deltaT)
     		a_pRobot->vitesse_cmd_courante += gParametresConfiguration.acceleration_max/deltaT;
     	else
     		a_pRobot->vitesse_cmd_courante = a_pRobot->vitesse_cible;
     }
-    else if(difference < 0)
+    else if(difference < 0.0)
     {
-    	if(difference < gParametresConfiguration.deceleration_max/deltaT)
+    	if(fabs(difference) > gParametresConfiguration.deceleration_max/deltaT)
     		a_pRobot->vitesse_cmd_courante -= gParametresConfiguration.deceleration_max/deltaT;
     	else
     		a_pRobot->vitesse_cmd_courante = a_pRobot->vitesse_cible;
@@ -79,11 +81,12 @@ void algo_decouverte(st_context_robot *a_pRobot, float a_deltaT)
 	tfminiplus_getLastAcquisition(MINILIDAR_HAUT, &lidarHautDistance, &lidarHautStrength, &lidarHautTemperature);
 
 	// Acquisition de la vitesse instantannée du robot
-	vehicule_speed_aimant_get(&robot_vitesse);
+	//vehicule_speed_aimant_get(&robot_vitesse);
 	vehicule_distance_aimant_get(&robot_distance);
+	robot_vitesse = (robot_distance - a_pRobot->travelledDistance) / a_deltaT;
 
 	a_pRobot->elapsedTime += a_deltaT;
-	a_pRobot->travelledDistance += robot_distance;
+	a_pRobot->travelledDistance = robot_distance;
 
 	// Automate
 	switch(etat_automate_automatique)
@@ -106,8 +109,8 @@ void algo_decouverte(st_context_robot *a_pRobot, float a_deltaT)
 
 	  // Si passage sous l'arche, alors passage à l'état automate_auto_stop
 		// Pour commencer on met une limite de distance (7m) pour pas que le robot file partout
-		if( ((lidarHautDistance != -2) && ((lidarHautDistance>30) || (lidarHautDistance<150))) ||
-			(a_pRobot->travelledDistance > 700) )
+		if( ((lidarHautDistance != -2) && ((lidarHautDistance>30) && (lidarHautDistance<150))) ||
+			(a_pRobot->travelledDistance > 7.0) )
 		{
 			// Detection de l'arche
 			a_pRobot->vitesse_cible = 0.0;
@@ -116,8 +119,9 @@ void algo_decouverte(st_context_robot *a_pRobot, float a_deltaT)
 	  break;
 	case automate_auto_stop :
 	  // Decelleration jusqu'à l'arrêt total
+		calculConsigneTrapezoidaleVitesse(a_pRobot, a_deltaT);
 	  // Quand la vitesse reelle est à 0, alors passage à l'état automate_auto_fini
-		if(abs(robot_vitesse) < 0.1) // 0.1 m/s
+		if(fabs(robot_vitesse) < 0.1) // 0.1 m/s
 			etat_automate_automatique = automate_auto_fini;
 	  break;
 	default :
@@ -125,7 +129,11 @@ void algo_decouverte(st_context_robot *a_pRobot, float a_deltaT)
 	}
 
 	// Calculs des PID
-	throttle = pid_output(&(a_pRobot->pidVitesse), a_pRobot->vitesse_cmd_courante - robot_vitesse);
+	throttle = a_pRobot->vitesse_cmd_courante + pid_output(&(a_pRobot->pidVitesse), a_pRobot->vitesse_cmd_courante - robot_vitesse);
+	if(throttle > VEHICULE_SPEED_MAX)
+		throttle = VEHICULE_SPEED_MAX;
+	else if (throttle < -VEHICULE_SPEED_MAX)
+		throttle = -VEHICULE_SPEED_MAX;
 
 	if((lidarDroitDistance != -2) && (lidarGaucheDistance != -2))
 		erreur_direction = lidarDroitDistance - lidarGaucheDistance;
@@ -144,28 +152,39 @@ void algo_decouverte(st_context_robot *a_pRobot, float a_deltaT)
 	}
 
 	direction = pid_output(&(a_pRobot->pidDirection), (float)erreur_direction);
+	if(direction > VEHICULE_DIR_MAX)
+		direction = VEHICULE_DIR_MAX;
+	else if (direction < -VEHICULE_DIR_MAX)
+		direction = -VEHICULE_DIR_MAX;
 
 	// Envoi des commandes
 	vehicule_dir_set(direction);
 	vehicule_throttle_set(throttle);
 
 	// Télémétrie
-	pTeleElement = telemetrie_pt_enreg_suivant(&erreur);
-	if(erreur == 0)
-	{
-		pTeleElement->consigne_direction = direction;
-		pTeleElement->consigne_vitesse = throttle;
-		pTeleElement->mesure_vitesse = robot_vitesse;
-		pTeleElement->mesure_distance = robot_distance;
-		pTeleElement->lidar_droit = lidarDroitDistance;
-		pTeleElement->lidar_gauche = lidarGaucheDistance;
-		pTeleElement->lidar_avant = lidarAvantDistance;
-		pTeleElement->lidar_haut = lidarHautDistance;
-		pTeleElement->heading = gyro_get_heading();
-		pTeleElement->gyro_dps = gyro_get_dps();
-		pTeleElement->etat_automate_principal = automate_principal_autonome;
-		pTeleElement->etat_automate_auto = etat_automate_automatique;
-	}
+	printf("T;%f;%f;%f;%f;%f;%f;%d;%d;%d;%d;%d;%d\r\n",
+			throttle, direction,
+			robot_vitesse, gyro_get_heading(),
+			gyro_get_dps(), a_pRobot->travelledDistance,
+			(int)lidarDroitDistance, (int)lidarGaucheDistance,
+			(int)lidarAvantDistance, (int)lidarHautDistance,
+			automate_principal_autonome, etat_automate_automatique);
+//	pTeleElement = telemetrie_pt_enreg_suivant(&erreur);
+//	if(erreur == 0)
+//	{
+//		pTeleElement->consigne_direction = direction;
+//		pTeleElement->consigne_vitesse = throttle;
+//		pTeleElement->mesure_vitesse = robot_vitesse;
+//		pTeleElement->mesure_distance = robot_distance;
+//		pTeleElement->lidar_droit = lidarDroitDistance;
+//		pTeleElement->lidar_gauche = lidarGaucheDistance;
+//		pTeleElement->lidar_avant = lidarAvantDistance;
+//		pTeleElement->lidar_haut = lidarHautDistance;
+//		pTeleElement->heading = gyro_get_heading();
+//		pTeleElement->gyro_dps = gyro_get_dps();
+//		pTeleElement->etat_automate_principal = automate_principal_autonome;
+//		pTeleElement->etat_automate_auto = etat_automate_automatique;
+//	}
 
 }
 
@@ -176,15 +195,33 @@ void algo_init(st_context_robot *a_pRobot)
 	// Initialisation de la télémétrie
 	telemetrie_init();
 	gyro_reset_heading();
+	vehicule_distance_aimant_reset();
 
 	// Initialisation des éléments de base du robot
-	a_pRobot->travelledDistance = 0;
+	a_pRobot->travelledDistance = 0.0;
 	a_pRobot->vitesse_cible = 0.0;
 	a_pRobot->vitesse_cmd_courante = 0.0;
 	a_pRobot->elapsedTime = 0.0;
 
 	// Initialisation des PID
-	pid_init(&(a_pRobot->pidVitesse), gParametresConfiguration.pid_vitesse_kp, gParametresConfiguration.pid_vitesse_ki, gParametresConfiguration.pid_vitesse_kd, 0.8);
-	pid_init(&(a_pRobot->pidDirection), gParametresConfiguration.pid_direction_kp, gParametresConfiguration.pid_direction_ki, gParametresConfiguration.pid_direction_kd, 0.8);
+	pid_init(&(a_pRobot->pidVitesse), gParametresConfiguration.pid_vitesse_kp, gParametresConfiguration.pid_vitesse_ki, gParametresConfiguration.pid_vitesse_kd, 0.3);
+	pid_init(&(a_pRobot->pidDirection), gParametresConfiguration.pid_direction_kp, gParametresConfiguration.pid_direction_ki, gParametresConfiguration.pid_direction_kd, 0.3);
+
+	// Affichage pour enregistrer dans le fichier de trace sur la Raspberry si necessaire
+	printf("T;RobotRoulant;\r\n");
+	// Affichage des parametres courants
+	printf("T;%f;%f;%f;%f;%f;%f;%f;%f;%f;%f;%f;\r\n",
+			gParametresConfiguration.acceleration_max,
+			gParametresConfiguration.deceleration_max,
+			gParametresConfiguration.vitesse_max_ligne_droite,
+			gParametresConfiguration.vitesse_max_virage,
+			gParametresConfiguration.vitesse_max_decouverte,
+			gParametresConfiguration.pid_vitesse_kp,
+			gParametresConfiguration.pid_vitesse_ki,
+			gParametresConfiguration.pid_vitesse_kd,
+			gParametresConfiguration.pid_direction_kp,
+			gParametresConfiguration.pid_direction_ki,
+			gParametresConfiguration.pid_direction_kd );
+	printf("T;throttle;direction;robot_vitesse;heading;dps;travelled_distance;lidar_droit;lidar_gauche;lidar_avant;lidar_haut;automate_principal_autonome;etat_automate_automatique;\r\n");
 
 }

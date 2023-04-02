@@ -28,6 +28,7 @@
 #include "imu.h"
 #include "pid.h"
 #include "algo_suivi_bords.h"
+#include "parametres_configuration.h"
 #include "telemetrie.h"
 /* USER CODE END Includes */
 
@@ -69,7 +70,6 @@ UART_HandleTypeDef huart3;
 DMA_HandleTypeDef hdma_uart4_rx;
 DMA_HandleTypeDef hdma_uart5_rx;
 DMA_HandleTypeDef hdma_uart7_rx;
-DMA_HandleTypeDef hdma_uart7_tx;
 DMA_HandleTypeDef hdma_uart8_rx;
 
 /* USER CODE BEGIN PV */
@@ -154,7 +154,7 @@ int main(void)
 	uint32_t last_time_gyro;
 	uint16_t temps_appui_boutonext1, temps_relachement_boutonext1;
 	uint16_t temps_appui_boutonext2;
-	float direction, throttle, distance, vitesse;
+	float direction, throttle, distance, distance_precedente, vitesse;
 	st_tele_element *pTeleElement;
 	st_context_robot robot_contexte;
 	int erreur;
@@ -195,6 +195,7 @@ int main(void)
   MX_ADC1_Init();
   MX_ADC3_Init();
   MX_ADC2_Init();
+
   MX_TIM12_Init();
   /* USER CODE BEGIN 2 */
 
@@ -207,6 +208,7 @@ int main(void)
   init_radio_commandes();
 
   // Récupération des parametres de conf
+  paramConf_restaure();
 
   // Gyro
   if(gyro_init() == GYRO_OK)
@@ -235,6 +237,8 @@ int main(void)
   temps_appui_boutonext1 = 0;
   temps_relachement_boutonext1 = 0;
   temps_appui_boutonext2 = 0;
+  distance = 0;
+  distance_precedente = 0;
 
   /* USER CODE END 2 */
 
@@ -279,7 +283,9 @@ int main(void)
 			  etat_automate_principal = automate_principal_autonome;
 		  }
 		  else if(temps_appui_boutonext2 > 1000)
+		  {
 			  etat_automate_principal = automate_principal_shell;
+		  }
 		  else
 		  {
 			  // On reste dans l'état actuel.
@@ -288,20 +294,12 @@ int main(void)
 				radio_throttle_get(&throttle);
 				vehicule_dir_set(direction);
 				vehicule_throttle_set(throttle);
-				vehicule_distance_aimant_get(&distance);
-				vehicule_speed_aimant_get(&vitesse);
-				if(erreur == 0)
-				{
-					pTeleElement->consigne_direction = direction;
-					pTeleElement->consigne_vitesse = throttle;
-					pTeleElement->mesure_vitesse = vitesse;
-					pTeleElement->mesure_distance = distance;
-					pTeleElement->heading = gyro_get_heading();
-					pTeleElement->gyro_dps = gyro_get_dps();
-					pTeleElement->etat_automate_principal = automate_principal_radio;
 
-					pTeleElement = telemetrie_pt_enreg_suivant(&erreur);
-				}
+//				vehicule_distance_aimant_get(&distance);
+//				vitesse = (distance-distance_precedente)/0.01;
+//				distance_precedente = distance;
+//
+//				printf("%f;%f;%f\r\n", throttle, vitesse, distance);
 		  }
 		  break;
 	  case automate_principal_autonome :
@@ -323,7 +321,11 @@ int main(void)
 		  // Si le pilote tente de reprendre le controle passage immédiat des commandes
 		  // Si le tour de piste en automatique est fini alors passage des commandes à la radio
 		  if((radio_isThereCommand() != 0) || (etat_automate_automatique == automate_auto_fini))
+		  {
+			  printf("T;Fin;\r\n");
 			  etat_automate_principal = automate_principal_radio;
+
+		  }
 //		  else
 //		  {
 //			  // Appel de l'automate automatique
@@ -1305,9 +1307,6 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
-  /* DMA1_Stream1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
   /* DMA1_Stream2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);

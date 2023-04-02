@@ -1,0 +1,93 @@
+
+# Prérequis :
+#############
+	- Sur le PC : VirtualBox + VM telemetry (ES+Kibana)
+	pip3 install zmq
+	pip3 install elasticsearch
+        
+	- Sur la Pi Zerro : 
+	pip3 install pyserial
+	
+# Outils :
+##########
+Simulator (STM32):
+	- simulator.py
+
+Backend (Pi Zerro):
+	- backend.py : @IP=@B (exemple : 100.200.0.1)
+	Ligne de commande : 
+	python3 backend.py  -s /dev/ttys004 -f 100.200.0.2 -b 100.200.0.1
+
+Frontend (PC portable):
+	- frontend.py : @IP=@F (exemple : 100.200.0.2)
+	Ligne de commande : 
+	python3 frontend.py                 -f 100.200.0.2 -b 100.200.0.1 -e 192.168.56.166
+
+	- VM avec Elasticsearch (Base de donnée) & Kiabana (Graph) : @IP=@VM (192.168.56.166)
+	=> pour visualiser la télémétrie depuis un navigateur (exemple : Firefox) : http://192.168.56.166:5601
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+# VM à envoyer via wetransfert : nmirault@hotmail.fr
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+# Backup:
+
+elasticsearch:
+elasticsearch
+curl 127.0.0.1:9200/_cat/indices
+curl -XDELETE 127.0.0.1:9200/es*
+$ curl -XGET 'http://localhost:9200/es*/_mapping?pretty'
+
+curl -XDELETE 192.168.56.146:9200/es*
+
+kinaba:
+kinaba
+http://localhost:5601
+
+http://192.168.56.146:5601
+
+socat -d -d pty,raw,echo=0 pty,raw,echo=0
+python3 backend.py -s /dev/ttys005 -f 127.0.0.1 -b 127.0.0.1
+python3 frontend.py -f 127.0.0.1 -b 127.0.0.1 -e 192.168.56.146
+# connect to serial
+python3 simulator.py -s /dev/ttys006
+
+# Todo
+######
+- add to https://github.com/nicmir/nicmir_projects/tree/master/TRR2021_Roulant
+- Rasperry pi zero w + test with APN
+- buy a second Rasperry pi zero w and connect serial together
+# Done
+######
+- add elasticsearch & kibana
+- Buy Rasperry pi zero w 
+- Rasperry pi zero w + test without APN
+
+[PI0]
+sudo apt install python3-numpy
+sudo apt install python3-serial
+sudo apt install python3-zmq
+
+ssh pi@192.168.1.10   / rootroot
+scp -r /Users/rochester/Desktop/telemetry2.0 pi@192.168.1.10:/home/pi
+
+[PI0] socat -d -d pty,raw,echo=0 pty,raw,echo=0
+[PI0] python3 backend.py -s /dev/pts/2 -f 192.168.1.5 -b 192.168.1.10
+[MAC] python3 frontend.py -f 192.168.1.5 -b 192.168.1.10 -e 127.0.0.1
+# connect to serial
+[PI0] python3 simulator.py -s /dev/pts/3
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+NO PIZERO:
+	curl -XDELETE 192.168.56.146:9200/es*
+	http://192.168.56.146:5601
+
+socat -d -d pty,raw,echo=0 pty,raw,echo=0
+python3 backend.py  -s /dev/ttys005 -f 127.0.0.1 -b 127.0.0.1
+python3 frontend.py -f 127.0.0.1    -b 127.0.0.1 -e 192.168.56.166
+python3 simulator.py -s /dev/ttys006
+
+# EOF

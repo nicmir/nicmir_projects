@@ -1,0 +1,348 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title "Télécommande Moteur Pas à Pas"
+Date "2023-04-02"
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L MCU_Module:Arduino_Nano_Every A1
+U 1 1 642996B1
+P 5515 3670
+F 0 "A1" H 5160 2720 50  0000 C CNN
+F 1 "Arduino_Nano_Every" H 5925 2720 50  0000 C CNN
+F 2 "Module:Arduino_Nano" H 5515 3670 50  0001 C CIN
+F 3 "https://content.arduino.cc/assets/NANOEveryV3.0_sch.pdf" H 5515 3670 50  0001 C CNN
+	1    5515 3670
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW5
+U 1 1 6429C3FE
+P 6600 4170
+F 0 "SW5" H 6590 4375 50  0000 C CNN
+F 1 "SW_Push" H 6590 4085 50  0000 C CNN
+F 2 "" H 6600 4370 50  0001 C CNN
+F 3 "~" H 6600 4370 50  0001 C CNN
+	1    6600 4170
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_Push SW2
+U 1 1 6429D357
+P 4425 3770
+F 0 "SW2" H 3595 3825 50  0000 C CNN
+F 1 "SW_Push" H 3685 3760 50  0000 C CNN
+F 2 "" H 4425 3970 50  0001 C CNN
+F 3 "~" H 4425 3970 50  0001 C CNN
+	1    4425 3770
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:Powered_Rotary_Encoder U1
+U 1 1 642AA0BC
+P 7550 4320
+F 0 "U1" H 7780 4345 50  0000 L CNN
+F 1 "Powered_Rotary_Encoder" H 7780 4254 50  0000 L CNN
+F 2 "" H 7600 4220 50  0001 C CNN
+F 3 "" H 7600 4220 50  0001 C CNN
+	1    7550 4320
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:DB9_Female J1
+U 1 1 642AB488
+P 2740 3470
+F 0 "J1" H 2658 4162 50  0000 C CNN
+F 1 "DB9_Female" H 2658 4071 50  0000 C CNN
+F 2 "" H 2740 3470 50  0001 C CNN
+F 3 " ~" H 2740 3470 50  0001 C CNN
+	1    2740 3470
+	-1   0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_SPDT_MSM SW4
+U 1 1 642AF363
+P 6590 3670
+F 0 "SW4" H 5785 3730 50  0000 C CNN
+F 1 "SW_SPDT_MSM" H 5970 3630 50  0000 C CNN
+F 2 "" H 6590 3670 50  0001 C CNN
+F 3 "~" H 6590 3670 50  0001 C CNN
+	1    6590 3670
+	-1   0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_SPDT_MSM SW3
+U 1 1 642AFBE6
+P 4425 3970
+F 0 "SW3" H 3600 4030 50  0000 C CNN
+F 1 "SW_SPDT_MSM" H 3790 3945 50  0000 C CNN
+F 2 "" H 4425 3970 50  0001 C CNN
+F 3 "~" H 4425 3970 50  0001 C CNN
+	1    4425 3970
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5015 3870 4625 3870
+Wire Wire Line
+	4625 4070 4790 4070
+Wire Wire Line
+	4790 4070 4790 3970
+Wire Wire Line
+	4790 3970 5015 3970
+$Comp
+L power:GND #PWR05
+U 1 1 642B7C71
+P 4150 4000
+F 0 "#PWR05" H 4150 3750 50  0001 C CNN
+F 1 "GND" H 4155 3827 50  0000 C CNN
+F 2 "" H 4150 4000 50  0001 C CNN
+F 3 "" H 4150 4000 50  0001 C CNN
+	1    4150 4000
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4150 4000 4150 3970
+Wire Wire Line
+	4150 3970 4225 3970
+Text Notes 4275 4215 0    50   ~ 0
+Vitesse
+Wire Wire Line
+	5015 3770 4625 3770
+Wire Wire Line
+	4150 3970 4150 3770
+Wire Wire Line
+	4150 3770 4225 3770
+Connection ~ 4150 3970
+Text Notes 4665 3770 0    50   ~ 0
+Gauche
+Text Notes 6250 3475 0    50   ~ 0
+Mode Patrick Libre Christophe
+Wire Wire Line
+	5715 2500 5715 2670
+Wire Wire Line
+	6800 4170 6900 4170
+Wire Wire Line
+	6900 4170 6900 4215
+$Comp
+L power:GND #PWR08
+U 1 1 642C6E17
+P 6900 4215
+F 0 "#PWR08" H 6900 3965 50  0001 C CNN
+F 1 "GND" H 6905 4042 50  0000 C CNN
+F 2 "" H 6900 4215 50  0001 C CNN
+F 3 "" H 6900 4215 50  0001 C CNN
+	1    6900 4215
+	1    0    0    -1  
+$EndComp
+Text Notes 6070 4165 0    50   ~ 0
+Droite
+Wire Wire Line
+	6015 4170 6400 4170
+Wire Wire Line
+	6900 4170 7150 4170
+Connection ~ 6900 4170
+Wire Wire Line
+	7150 4520 6125 4520
+Wire Wire Line
+	6125 4520 6125 4370
+Wire Wire Line
+	6125 4370 6015 4370
+Wire Wire Line
+	6015 4270 6150 4270
+Wire Wire Line
+	6150 4270 6150 4465
+Wire Wire Line
+	6150 4465 7050 4465
+Wire Wire Line
+	7050 4465 7050 4320
+Wire Wire Line
+	7050 4320 7150 4320
+NoConn ~ 7150 4420
+NoConn ~ 7150 4620
+$Comp
+L power:+5V #PWR09
+U 1 1 642CF92D
+P 7100 3995
+F 0 "#PWR09" H 7100 3845 50  0001 C CNN
+F 1 "+5V" H 7115 4168 50  0000 C CNN
+F 2 "" H 7100 3995 50  0001 C CNN
+F 3 "" H 7100 3995 50  0001 C CNN
+	1    7100 3995
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	7100 3995 7100 4070
+Wire Wire Line
+	7100 4070 7150 4070
+$Comp
+L power:+5V #PWR07
+U 1 1 642D0E3F
+P 5715 2500
+F 0 "#PWR07" H 5715 2350 50  0001 C CNN
+F 1 "+5V" H 5730 2673 50  0000 C CNN
+F 2 "" H 5715 2500 50  0001 C CNN
+F 3 "" H 5715 2500 50  0001 C CNN
+	1    5715 2500
+	1    0    0    -1  
+$EndComp
+NoConn ~ 5615 2670
+NoConn ~ 6015 3070
+NoConn ~ 6015 3170
+NoConn ~ 6015 3470
+NoConn ~ 5015 4370
+NoConn ~ 5015 4270
+NoConn ~ 5015 4170
+NoConn ~ 5015 3670
+NoConn ~ 5015 3570
+Wire Wire Line
+	5015 3270 3040 3270
+Wire Wire Line
+	5015 3170 3175 3170
+Wire Wire Line
+	3175 3170 3175 3070
+Wire Wire Line
+	3175 3070 3040 3070
+Wire Wire Line
+	3040 3470 3175 3470
+Wire Wire Line
+	3175 3470 3175 3370
+Wire Wire Line
+	3175 3370 5015 3370
+Wire Wire Line
+	3040 3870 3100 3870
+Wire Wire Line
+	3100 3870 3100 3910
+$Comp
+L power:GND #PWR02
+U 1 1 642DBA2C
+P 3100 3910
+F 0 "#PWR02" H 3100 3660 50  0001 C CNN
+F 1 "GND" H 3105 3737 50  0000 C CNN
+F 2 "" H 3100 3910 50  0001 C CNN
+F 3 "" H 3100 3910 50  0001 C CNN
+	1    3100 3910
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+5V #PWR01
+U 1 1 642DBE98
+P 3100 3730
+F 0 "#PWR01" H 3100 3580 50  0001 C CNN
+F 1 "+5V" H 3115 3903 50  0000 C CNN
+F 2 "" H 3100 3730 50  0001 C CNN
+F 3 "" H 3100 3730 50  0001 C CNN
+	1    3100 3730
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3040 3770 3100 3770
+Wire Wire Line
+	3100 3770 3100 3730
+NoConn ~ 3040 3570
+NoConn ~ 3040 3670
+NoConn ~ 3040 3170
+NoConn ~ 3040 3370
+NoConn ~ 5015 3470
+NoConn ~ 6015 3970
+NoConn ~ 6015 3870
+NoConn ~ 3990 2070
+$Comp
+L power:GND #PWR06
+U 1 1 642E4632
+P 5515 4745
+F 0 "#PWR06" H 5515 4495 50  0001 C CNN
+F 1 "GND" H 5520 4572 50  0000 C CNN
+F 2 "" H 5515 4745 50  0001 C CNN
+F 3 "" H 5515 4745 50  0001 C CNN
+	1    5515 4745
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5515 4745 5515 4670
+Wire Wire Line
+	3390 2170 3590 2170
+Connection ~ 3390 2170
+Wire Wire Line
+	3390 2070 3390 2170
+Wire Wire Line
+	3140 2270 3140 2320
+Wire Wire Line
+	3090 2270 3140 2270
+Wire Wire Line
+	3090 2170 3390 2170
+$Comp
+L power:+9V #PWR04
+U 1 1 642B04F9
+P 3390 2070
+F 0 "#PWR04" H 3390 1920 50  0001 C CNN
+F 1 "+9V" H 3405 2243 50  0000 C CNN
+F 2 "" H 3390 2070 50  0001 C CNN
+F 3 "" H 3390 2070 50  0001 C CNN
+	1    3390 2070
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR03
+U 1 1 642B03ED
+P 3140 2320
+F 0 "#PWR03" H 3140 2070 50  0001 C CNN
+F 1 "GND" H 3145 2147 50  0000 C CNN
+F 2 "" H 3140 2320 50  0001 C CNN
+F 3 "" H 3140 2320 50  0001 C CNN
+	1    3140 2320
+	1    0    0    -1  
+$EndComp
+$Comp
+L Switch:SW_SPDT SW1
+U 1 1 642AEB51
+P 3790 2170
+F 0 "SW1" H 3790 2455 50  0000 C CNN
+F 1 "SW_SPDT" H 3790 2364 50  0000 C CNN
+F 2 "" H 3790 2170 50  0001 C CNN
+F 3 "~" H 3790 2170 50  0001 C CNN
+	1    3790 2170
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Conn_01x02_Male J2
+U 1 1 642AD1F5
+P 2890 2170
+F 0 "J2" H 2998 2351 50  0000 C CNN
+F 1 "Conn_01x02_Male" H 2998 2260 50  0000 C CNN
+F 2 "" H 2890 2170 50  0001 C CNN
+F 3 "~" H 2890 2170 50  0001 C CNN
+	1    2890 2170
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5415 2670 5415 2270
+Wire Wire Line
+	5415 2270 3990 2270
+Wire Wire Line
+	6015 3770 6390 3770
+Wire Wire Line
+	6015 3670 6300 3670
+Wire Wire Line
+	6300 3670 6300 3570
+Wire Wire Line
+	6300 3570 6390 3570
+Wire Wire Line
+	6900 4170 6900 3670
+Wire Wire Line
+	6900 3670 6790 3670
+Text Label 4000 3170 0    50   ~ 0
+Pulse
+Text Label 4000 3270 0    50   ~ 0
+Direction
+Text Label 4000 3370 0    50   ~ 0
+Enable
+$EndSCHEMATC

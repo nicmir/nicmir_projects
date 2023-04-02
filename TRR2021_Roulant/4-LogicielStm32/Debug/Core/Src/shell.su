@@ -1,5 +1,5 @@
 core_cm7.h:2147:34:__NVIC_SystemReset	4	static,ignoring_inline_asm
-shell.c:96:5:saisie_nombre	32	static
-shell.c:123:7:saisie_commande	40	static
+shell.c:98:5:saisie_nombre	32	static
+shell.c:125:7:saisie_commande	40	static
 shell.c:265:6:bootLoaderInit	8	static
 shell.c:275:6:shell	488	static

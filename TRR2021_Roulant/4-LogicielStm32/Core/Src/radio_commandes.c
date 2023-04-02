@@ -7,6 +7,7 @@
 
 #include "main.h"
 #include <stdlib.h>
+#include "parametres_configuration.h"
 
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim2;
@@ -24,8 +25,6 @@ typedef struct {
 // La différence entre l'axe du véhicule et l'axe de la direction. L'angle des roues.
 // Ici l'angle quand on met la commande à 2000 us.
 // Approximation à vérifier : on considère la commande linéaire (angle = commande * K).
-#define VEHICULE_DIR_MAX   26.0 // ° - Mesuré sur la TT01
-#define VEHICULE_SPEED_MAX 10.0 // m/s
 
 static st_pwm_infos radio_dir;
 static st_pwm_infos radio_throttle;
@@ -164,6 +163,7 @@ int vehicule_speed_get(float *a_pSpeed)
 // !!!! A travailler !!!!
 int vehicule_speed_aimant_get(float *a_pSpeed)
 {
+
 	// Speed computation
 	*a_pSpeed =  100000.0/(magnet_count*(float)(vitesse_mesuree+1)) / gear_ratio * wheel_perimeter;
 
@@ -204,13 +204,28 @@ int vehicule_dir_set(float a_dir)
 // Par convention, la vitesse est négative quand on recule.
 int vehicule_throttle_set(float a_throttle)
 {
-	if((a_throttle>VEHICULE_SPEED_MAX) || (a_throttle<-VEHICULE_SPEED_MAX))
-		return -1;
-	else
-		// A terme, vérifier que le duty_cycle est bien limité à 1000 - 2000 us.
-		htim1.Instance->CCR1 = 1500 + (int32_t)((a_throttle/VEHICULE_SPEED_MAX)*500.0);
+	float commande;
+	int retour;
 
-	return 0;
+	retour = 0;
+
+	if(a_throttle>VEHICULE_SPEED_MAX/2)
+	{
+		commande = VEHICULE_SPEED_MAX/2;
+		retour = -1;
+	}
+	else if (a_throttle<-VEHICULE_SPEED_MAX)
+	{
+		commande = -VEHICULE_SPEED_MAX;
+		retour = -1;
+	}
+	else
+		commande = a_throttle;
+
+	// A terme, vérifier que le duty_cycle est bien limité à 1000 - 2000 us.
+	htim1.Instance->CCR1 = 1500 + (int32_t)((commande/VEHICULE_SPEED_MAX)*500.0);
+
+	return retour;
 }
 
 void init_radio_commandes()

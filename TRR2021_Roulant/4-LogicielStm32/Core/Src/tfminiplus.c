@@ -281,6 +281,19 @@ void tfminiplusIrq(LIDAR_ID a_numCapteur)
 		}
 		// Sinon, c'est un format inconnu. On j�te la trame.
 
+		if((buffer_uart5[0] == 0x0) && (a_numCapteur == MINILIDAR_HAUT))
+		{
+			buffer_uart5[0] = pLidar->serialBuffer[0];
+			buffer_uart5[1] = pLidar->serialBuffer[1];
+			buffer_uart5[2] = pLidar->serialBuffer[2];
+			buffer_uart5[3] = pLidar->serialBuffer[3];
+			buffer_uart5[4] = pLidar->serialBuffer[4];
+			buffer_uart5[5] = pLidar->serialBuffer[5];
+			buffer_uart5[6] = pLidar->serialBuffer[6];
+			buffer_uart5[7] = pLidar->serialBuffer[7];
+			buffer_uart5[8] = pLidar->serialBuffer[8];
+			buffer_uart5[9] = pLidar->serialBuffer[9];
+		}
 		// On r�arme le DMA
 		HAL_UART_Receive_DMA(pLidar->pHuart, pLidar->serialBuffer, 9);
 
@@ -752,9 +765,10 @@ int tfminiplus_getVersion(LIDAR_ID a_numCapteur, int32_t *a_pVersion)
 int tfminiplus_init()
 {
 	HAL_StatusTypeDef retour;
+	int i;
 
 	// Initialisation des parametres
-	miniLidarDroit.pHuart = &huart5;
+	miniLidarDroit.pHuart = &huart7;
 	miniLidarDroit.distance = -2;
 	miniLidarDroit.strength = 0;
 	miniLidarDroit.temperature = 0;
@@ -763,7 +777,7 @@ int tfminiplus_init()
 	miniLidarDroit.semaphore = 0;
 	miniLidarDroit.nb_irq = 0;
 
-	miniLidarGauche.pHuart = &huart7;
+	miniLidarGauche.pHuart = &huart5;
 	miniLidarGauche.distance = -2;
 	miniLidarGauche.strength = 0;
 	miniLidarGauche.temperature = 0;
@@ -806,7 +820,7 @@ int tfminiplus_init()
 
 	HAL_GPIO_WritePin(lid2_pwr_en_GPIO_Port, lid2_pwr_en_Pin, GPIO_PIN_SET);
 	HAL_Delay(100);
-	retour = HAL_UART_Receive_DMA(miniLidarGauche.pHuart, miniLidarGauche.serialBuffer, 10);
+	retour = HAL_UART_Receive_DMA(miniLidarDroit.pHuart, miniLidarDroit.serialBuffer, 10);
 	HAL_Delay(900);
 
 	HAL_GPIO_WritePin(lid3_pwr_en_GPIO_Port, lid3_pwr_en_Pin, GPIO_PIN_SET);
@@ -817,15 +831,17 @@ int tfminiplus_init()
 
 	HAL_GPIO_WritePin(lid5_pwr_en_GPIO_Port, lid5_pwr_en_Pin, GPIO_PIN_SET);
 	HAL_Delay(100);
-	retour = HAL_UART_Receive_DMA(miniLidarDroit.pHuart, miniLidarDroit.serialBuffer, 10);
+	retour = HAL_UART_Receive_DMA(miniLidarGauche.pHuart, miniLidarGauche.serialBuffer, 10);
 	HAL_Delay(900);
 
 	HAL_GPIO_WritePin(lid6_pwr_en_GPIO_Port, lid6_pwr_en_Pin, GPIO_PIN_SET);
 	HAL_Delay(100);
-	retour = HAL_UART_Receive_DMA(miniLidarHaut.pHuart, miniLidarHaut.serialBuffer, 26);
+	retour = HAL_UART_Receive_DMA(miniLidarHaut.pHuart, miniLidarHaut.serialBuffer, 10);
 	HAL_Delay(900);
 
 	// D�but d'�coute
+	for(i=0; i<10; i++)
+		buffer_uart5[i] = 0;
 //	retour = HAL_UART_Receive_DMA(miniLidarGauche.pHuart, miniLidarGauche.serialBuffer, 9);
 //	retour += HAL_UART_Receive_DMA(miniLidarDroit.pHuart, miniLidarDroit.serialBuffer, 9);
 //	retour += HAL_UART_Receive_DMA(miniLidarHaut.pHuart, miniLidarHaut.serialBuffer, 9);
